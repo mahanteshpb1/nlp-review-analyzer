@@ -265,12 +265,11 @@ function openDashboard(data, productTitle) {
   const iframe = document.createElement('iframe');
   iframe.src = iframeSrc;
   iframe.style.cssText = 'width:100%;height:100%;border:none;border-radius:0;';
-  iframe.allow = 'same-origin';
 
   iframe.addEventListener('load', () => {
     iframe.contentWindow.postMessage(
       { type: 'REVIEWLENS_DATA', payload: { data, productTitle } },
-      chrome.runtime.getURL('/')
+      '*'
     );
   });
 

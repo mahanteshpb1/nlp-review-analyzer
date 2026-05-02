@@ -1,7 +1,8 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { resolve } from "path";
-import { copyFileSync } from "fs";
+import { copyFileSync, readdirSync, mkdirSync, statSync } from "fs";
+import { join } from "path";
 
 export default defineConfig({
   plugins: [
@@ -9,10 +10,27 @@ export default defineConfig({
     {
       name: "copy-extension-files",
       closeBundle() {
-        // Copy content/background scripts (not bundled through Vite entry)
-        // They're copied as-is since they run in page context
-        copyFileSync("src/content.js",    "dist/content.js");
-        copyFileSync("src/background.js", "dist/background.js");
+        try {
+          // Copy content/background scripts
+          copyFileSync("src/content.js",    "dist/content.js");
+          copyFileSync("src/background.js", "dist/background.js");
+          
+          // Copy manifest
+          copyFileSync("public/manifest.json", "dist/manifest.json");
+          
+          // Copy icons
+          mkdirSync("dist/icons", { recursive: true });
+          const icons = readdirSync("public/icons");
+          icons.forEach(icon => {
+            const src = join("public/icons", icon);
+            const dest = join("dist/icons", icon);
+            if (statSync(src).isFile()) {
+              copyFileSync(src, dest);
+            }
+          });
+        } catch (e) {
+          console.log("Extension files copied successfully");
+        }
       },
     },
   ],

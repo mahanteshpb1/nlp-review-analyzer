@@ -27,10 +27,13 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["assets/*", "dashboard.html"],
-      "matches": ["<all_urls>"]
+      "resources": ["assets/*", "index.html"],
+      "matches": ["https://*.amazon.in/*", "https://*.amazon.com/*", "https://www.flipkart.com/*"]
     }
   ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
   "action": {
     "default_title": "ReviewLens",
     "default_icon": {
