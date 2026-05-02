@@ -59,3 +59,30 @@ reviewlens/
     ├── requirements.txt
     └── README.md
 ```
+
+## Setup
+
+### Backend
+
+```bash
+cd backend
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
+
+On first request, HuggingFace will download:
+- `cardiffnlp/twitter-roberta-base-sentiment-latest` (~500MB)
+
+### Extension
+
+```bash
+cd extension
+npm install
+npm run build          # outputs to dist/
+```
+
+Load in Chrome:
+1. Go to `chrome://extensions`
+2. Enable **Developer mode**
+3. Click **Load unpacked** → select `extension/dist/`
