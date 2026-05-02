@@ -86,3 +86,41 @@ Load in Chrome:
 1. Go to `chrome://extensions`
 2. Enable **Developer mode**
 3. Click **Load unpacked** → select `extension/dist/`
+
+## API Contract
+
+**POST /analyze**
+
+Request:
+```json
+{
+  "product_title": "Samsung Galaxy S24 Ultra",
+  "reviews": [
+    {
+      "id": "abc123",
+      "text": "Battery life is great but camera disappoints",
+      "rating": 3.0,
+      "date": "January 15, 2024",
+      "username": "Rahul K.",
+      "helpful": 12
+    }
+  ]
+}
+```
+
+Response:
+```json
+{
+  "product_title": "Samsung Galaxy S24 Ultra",
+  "total_reviews": 1,
+  "sentiment_distribution": { "positive": 0, "neutral": 1, "negative": 0 },
+  "aspect_sentiment": [
+    { "aspect": "battery", "positive": 1, "neutral": 0, "negative": 0, "score": 1.0 },
+    { "aspect": "camera", "positive": 0, "neutral": 0, "negative": 1, "score": -1.0 }
+  ],
+  "trends": [{ "period": "Jan 2024", "positive": 0, "neutral": 1, "negative": 0, "avg_rating": 3.0 }],
+  "insights": [...],
+  "top_keywords": ["battery", "camera", ...],
+  "reviews": [{ ...original, "sentiment": "neutral", "sentiment_score": 0.71, "aspects": {...} }]
+}
+```
