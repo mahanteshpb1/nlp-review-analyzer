@@ -13,6 +13,8 @@ from functools import lru_cache
 from typing import Optional
 
 logger = logging.getLogger(__name__)
+from dotenv import load_dotenv
+load_dotenv()
 
 # ── Lazy model loading ─────────────────────────────────────────────────────────
 
@@ -24,6 +26,8 @@ def get_sentiment_pipeline():
     global _sentiment_pipeline
     if _sentiment_pipeline is None:
         from transformers import pipeline
+        import os
+        token = os.getenv("HF_TOKEN")  # This will now work
         logger.info("Loading sentiment model…")
         _sentiment_pipeline = pipeline(
             "sentiment-analysis",
@@ -31,6 +35,7 @@ def get_sentiment_pipeline():
             top_k=None,
             truncation=True,
             max_length=512,
+            token=token,
         )
         logger.info("Sentiment model loaded.")
     return _sentiment_pipeline

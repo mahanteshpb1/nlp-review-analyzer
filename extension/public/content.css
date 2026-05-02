@@ -1,0 +1,19 @@
+/* ReviewLens injected styles — minimal footprint */
+#reviewlens-trigger .rl-icon {
+  font-size: 16px;
+  animation: rl-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes rl-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.7; transform: scale(0.9); }
+}
+
+#reviewlens-panel {
+  animation: rl-slidein 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes rl-slidein {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
