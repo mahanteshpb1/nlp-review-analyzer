@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import analysis
+from .routers import analysis
 
 app = FastAPI(
     title="ReviewLens NLP API",

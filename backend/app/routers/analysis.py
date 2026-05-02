@@ -1,7 +1,7 @@
 import logging
 from fastapi import APIRouter, HTTPException
-from app.models.schemas import AnalysisRequest, AnalysisResponse
-from app.services.nlp_service import analyze_reviews
+from ..models.schemas import AnalysisRequest, AnalysisResponse
+from ..services.nlp_service import analyze_reviews
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
