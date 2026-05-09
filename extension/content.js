@@ -86,7 +86,7 @@ function injectTriggerButton(product) {
     </div>
   `;
 
-  const launch = () => openReviewIntel(product);
+  const launch = () => mountInlineIntel(product);
   btn.addEventListener('click', launch);
   btn.addEventListener('keydown', event => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -104,52 +104,52 @@ function injectTriggerButton(product) {
   target.parentNode?.insertBefore(btn, target) || document.body.appendChild(btn);
 }
 
-function openReviewIntel(product) {
+function mountInlineIntel(product) {
   document.getElementById('review-intel-overlay')?.remove();
 
-  const overlay = document.createElement('aside');
-  overlay.id = 'review-intel-overlay';
-  overlay.setAttribute('aria-label', 'Review Intel analysis panel');
-  overlay.innerHTML = buildOverlayHTML(product);
-  document.body.appendChild(overlay);
+  const shell = document.createElement('section');
+  shell.id = 'review-intel-overlay';
+  shell.setAttribute('aria-label', 'Review Intel analysis section');
+  shell.innerHTML = buildInlineHTML(product);
 
-  document.documentElement.style.overflow = 'hidden';
-  document.body.style.overflow = 'hidden';
-
-  const close = () => closeOverlay(overlay);
-  overlay.querySelector('#ri-close')?.addEventListener('click', close);
-
-  function onKeyDown(event) {
-    if (event.key === 'Escape') close();
+  const anchor = getInlineAnchor();
+  if (anchor?.parentNode) {
+    anchor.parentNode.insertBefore(shell, anchor);
+  } else {
+    document.body.appendChild(shell);
   }
 
-  overlay.__riKeyDown = onKeyDown;
-  window.addEventListener('keydown', onKeyDown);
+  shell.querySelector('#ri-close')?.addEventListener('click', () => closeInlineIntel(shell));
 
-  runPipeline(product, overlay).finally(() => {
-    window.removeEventListener('keydown', onKeyDown);
-  });
+  runPipeline(product, shell).catch(() => {});
 }
 
-function closeOverlay(overlay) {
+function closeInlineIntel(shell) {
   activeSessionId++;
-  if (overlay?.__riKeyDown) {
-    window.removeEventListener('keydown', overlay.__riKeyDown);
-  }
-  overlay?.remove();
-  document.documentElement.style.overflow = '';
-  document.body.style.overflow = '';
+  shell?.remove();
 }
 
-function buildOverlayHTML(product) {
+function getInlineAnchor() {
+  return (
+    document.getElementById('reviews-medley') ||
+    document.getElementById('averageCustomerReviews') ||
+    document.getElementById('customerReviews') ||
+    document.querySelector('#reviewsMedley') ||
+    document.querySelector('#productDetails_feature_div') ||
+    document.querySelector('#feature-bullets') ||
+    document.body
+  );
+}
+
+function buildInlineHTML(product) {
   return `
-    <div id="ri-panel">
-      <div id="ri-header">
+    <div id="ri-panel" class="ri-inline-shell">
+      <div id="ri-header" class="ri-inline-header">
         <div>
           <div id="ri-title">Review Intelligence</div>
           <div id="ri-subtitle">${escHtml(truncate(product.name, 76))}</div>
         </div>
-        <button id="ri-close" type="button" aria-label="Close analysis panel">✕</button>
+        <button id="ri-close" class="ri-inline-close" type="button" aria-label="Remove analysis section">Hide</button>
       </div>
       <div id="ri-status" class="ri-status ri-status--scraping">Preparing analysis…</div>
       <div id="ri-dashboard" style="display:none"></div>
@@ -169,8 +169,8 @@ async function runPipeline(product, overlay) {
 
   let scraped;
   try {
-    scraped = await window.ReviewScraper.scrapeHolistic((done, total, count) => {
-      setStatusSafe('scraping', `Scraped ${count} unique reviews across ${done}/${total} passes…`);
+    scraped = await window.ReviewScraper.scrapeHolistic(() => {
+      setStatusSafe('scraping', 'Scraping reviews…');
     });
   } catch (error) {
     setStatusSafe('error', `Scraping failed: ${error.message}`);
@@ -234,19 +234,41 @@ function renderDashboard(overlay, analytics, scraped) {
   const negPct = Math.round(sentimentDistribution.negative / total * 100);
   const neuPct = Math.max(0, 100 - posPct - negPct);
   const reviewStats = computeReviewStats(scraped.reviews || []);
+  const topStars = summarizeStars(reviewStats.stars);
+
+  // Build praised/complained features
+  const aspects = analytics.aspect_sentiments || {};
+  const praised = Object.entries(aspects)
+    .filter(([_, scores]) => (scores?.positive || 0) > 60)
+    .sort((a, b) => (b[1]?.positive || 0) - (a[1]?.positive || 0));
+  const complained = Object.entries(aspects)
+    .filter(([_, scores]) => (scores?.negative || 0) > 40)
+    .sort((a, b) => (b[1]?.negative || 0) - (a[1]?.negative || 0));
 
   dash.innerHTML = `
-    <div class="ri-chart-grid">
-      <section class="ri-chart-card">
-        <div class="ri-section-title">Sentiment Donut</div>
-        ${renderDonutChart({ positive: sentimentDistribution.positive || 0, neutral: sentimentDistribution.neutral || 0, negative: sentimentDistribution.negative || 0 })}
-      </section>
-      <section class="ri-chart-card">
-        <div class="ri-section-title">Star Distribution</div>
-        ${renderStarBars(reviewStats.stars)}
-      </section>
+    <!-- TOP ANCHOR SECTION: Large 4-column grid with main charts -->
+    <div class="ri-anchor-section">
+      <div class="ri-anchor-grid">
+        <section class="ri-anchor-card">
+          <div class="ri-section-title">Overall Sentiment</div>
+          ${renderDonutChart({ positive: sentimentDistribution.positive || 0, neutral: sentimentDistribution.neutral || 0, negative: sentimentDistribution.negative || 0 })}
+        </section>
+        <section class="ri-anchor-card">
+          <div class="ri-section-title">Star Distribution</div>
+          ${renderStarBars(reviewStats.stars, topStars)}
+        </section>
+        <section class="ri-anchor-card">
+          <div class="ri-section-title">Sentiment Breakdown</div>
+          ${renderSentimentTrendChart(sentimentDistribution)}
+        </section>
+        <section class="ri-anchor-card">
+          <div class="ri-section-title">Top Keywords</div>
+          ${renderKeywordCloud(analytics.keywords || [])}
+        </section>
+      </div>
     </div>
 
+    <!-- KEY METRICS STRIP -->
     <div class="ri-metrics">
       <div class="ri-metric">
         <div class="ri-metric-label">Reviews</div>
@@ -261,114 +283,164 @@ function renderDashboard(overlay, analytics, scraped) {
         <div class="ri-metric-val ri-red">${negPct}%</div>
       </div>
       <div class="ri-metric">
-        <div class="ri-metric-label">Top praised</div>
-        <div class="ri-metric-val ri-small">${escHtml(analytics.top_positive_feature || '—')}</div>
+        <div class="ri-metric-label">Neutral</div>
+        <div class="ri-metric-val ri-gray">${neuPct}%</div>
       </div>
       <div class="ri-metric">
-        <div class="ri-metric-label">Top complaint</div>
-        <div class="ri-metric-val ri-small">${escHtml(analytics.top_negative_feature || '—')}</div>
+        <div class="ri-metric-label">Peak Rating</div>
+        <div class="ri-metric-val ri-small">${topStars}★</div>
       </div>
     </div>
 
+    <!-- PRAISED FEATURES SECTION -->
+    ${praised.length ? `
+      <div class="ri-section">
+        <div class="ri-section-title">Praised Features (${praised.length})</div>
+        <div class="ri-feature-grid">
+          ${praised.map(([feature, scores]) => renderFeatureCard('praised', feature, scores, scraped.reviews, analytics.reviews)).join('')}
+        </div>
+      </div>
+    ` : ''}
+
+    <!-- COMPLAINED FEATURES SECTION -->
+    ${complained.length ? `
+      <div class="ri-section">
+        <div class="ri-section-title">Complained Features (${complained.length})</div>
+        <div class="ri-feature-grid">
+          ${complained.map(([feature, scores]) => renderFeatureCard('complained', feature, scores, scraped.reviews, analytics.reviews)).join('')}
+        </div>
+      </div>
+    ` : ''}
+
+    <!-- DEEPER INSIGHTS -->
     <div class="ri-section">
-      <div class="ri-section-title">Holistic coverage</div>
-      <div class="ri-hint-grid">
-        <div class="ri-hint-pill">Reviews used: ${scraped.reviews.length}</div>
-        <div class="ri-hint-pill">Aspect tags: ${scraped.aspects?.length || 0}</div>
-        <div class="ri-hint-pill">Positive / neutral / negative: ${sentimentDistribution.positive || 0} / ${sentimentDistribution.neutral || 0} / ${sentimentDistribution.negative || 0}</div>
+      <div class="ri-section-title">Insights & Summary</div>
+      <div class="ri-insights-container">
+        <div class="ri-insight-box">
+          <strong>Verdict:</strong> ${escHtml(analytics.verdict || 'Product analysis complete.')}
+        </div>
+        <div class="ri-insight-box">
+          <strong>Summary:</strong> ${escHtml(analytics.summary || 'No detailed summary available.')}
+        </div>
+        ${analytics.common_complaints?.length ? `
+          <div class="ri-insight-box">
+            <strong>Common Complaints:</strong>
+            <div class="ri-tags">
+              ${analytics.common_complaints.map(item => `<span class="ri-tag ri-tag-neg">${escHtml(item)}</span>`).join('')}
+            </div>
+          </div>
+        ` : ''}
       </div>
     </div>
 
-    <div class="ri-section">
-      <div class="ri-section-title">AI Summary</div>
-      <div class="ri-summary">${escHtml(analytics.summary || 'No summary available.')}</div>
-    </div>
-
-    <div class="ri-section">
-      <div class="ri-section-title">Sentiment Distribution</div>
-      <div class="ri-sent-bar">
-        <div class="ri-sent-pos" style="width:${posPct}%" title="Positive ${posPct}%"></div>
-        <div class="ri-sent-neu" style="width:${neuPct}%" title="Neutral ${neuPct}%"></div>
-        <div class="ri-sent-neg" style="width:${negPct}%" title="Negative ${negPct}%"></div>
-      </div>
-      <div class="ri-sent-legend">
-        <span><span class="ri-dot ri-dot-green"></span>Positive ${posPct}%</span>
-        <span><span class="ri-dot ri-dot-gray"></span>Neutral ${neuPct}%</span>
-        <span><span class="ri-dot ri-dot-red"></span>Negative ${negPct}%</span>
-      </div>
-    </div>
-
-    <div class="ri-section">
-      <div class="ri-section-title">Feature Sentiment</div>
-      ${renderAspectBars(analytics.aspect_sentiments || {})}
-    </div>
-
-    <div class="ri-section">
-      <div class="ri-section-title">Detected aspect tags</div>
-      <div class="ri-tags">
-        ${(scraped.aspects || []).length
-          ? scraped.aspects.map(aspect => `<span class="ri-tag">${escHtml(aspect)}</span>`).join('')
-          : '<div class="ri-empty">No aspect tags detected on the page.</div>'}
-      </div>
-    </div>
-
-    <div class="ri-section">
-      <div class="ri-section-title">Common Complaints</div>
-      <div class="ri-complaints">
-        ${(analytics.common_complaints || []).length
-          ? analytics.common_complaints.map(item => `<span class="ri-tag ri-tag-neg">${escHtml(item)}</span>`).join('')
-          : '<div class="ri-empty">No common complaints detected.</div>'}
-      </div>
-    </div>
-
-    <div class="ri-verdict">
-      <strong>Verdict:</strong> ${escHtml(analytics.verdict || 'No verdict available.')}
-    </div>
-
-    <div class="ri-section">
-      <div class="ri-section-title">Keywords</div>
-      <div class="ri-tags">
-        ${(analytics.keywords || []).length
-          ? analytics.keywords.map(keyword => `<span class="ri-tag">${escHtml(keyword)}</span>`).join('')
-          : '<div class="ri-empty">No keywords extracted.</div>'}
-      </div>
-    </div>
-
-    <div class="ri-section">
-      <div class="ri-section-title">Reviews <span id="ri-rev-count">(${scraped.reviews.length})</span></div>
-      <div class="ri-filter-row">
-        <button class="ri-chip ri-chip-active" type="button" data-filter="all">All</button>
-        <button class="ri-chip" type="button" data-filter="positive">Positive</button>
-        <button class="ri-chip" type="button" data-filter="negative">Negative</button>
-        <button class="ri-chip" type="button" data-filter="neutral">Neutral</button>
-      </div>
-      <div id="ri-review-list">
-        ${renderReviewCards(analytics.reviews || scraped.reviews)}
-      </div>
-    </div>
   `;
 
-  const filters = overlay.querySelectorAll('[data-filter]');
-  const allReviews = analytics.reviews || scraped.reviews;
+  overlay.querySelector('#ri-close')?.focus?.();
+}
 
-  filters.forEach(button => {
-    button.addEventListener('click', () => {
-      const sentiment = button.getAttribute('data-filter') || 'all';
-      filters.forEach(other => other.classList.remove('ri-chip-active'));
-      button.classList.add('ri-chip-active');
+function renderSentimentTrendChart(sentimentDistribution) {
+  const total = Math.max(1, (sentimentDistribution.positive || 0) + (sentimentDistribution.neutral || 0) + (sentimentDistribution.negative || 0));
+  const posPct = Math.round((sentimentDistribution.positive || 0) / total * 100);
+  const neuPct = Math.round((sentimentDistribution.neutral || 0) / total * 100);
+  const negPct = Math.max(0, 100 - posPct - neuPct);
 
-      const filtered = sentiment === 'all'
-        ? allReviews
-        : allReviews.filter(review => (review.sentiment || 'neutral') === sentiment);
+  const bars = [
+    { label: 'Positive', pct: posPct, count: sentimentDistribution.positive || 0, color: 'green' },
+    { label: 'Neutral', pct: neuPct, count: sentimentDistribution.neutral || 0, color: 'gray' },
+    { label: 'Negative', pct: negPct, count: sentimentDistribution.negative || 0, color: 'red' }
+  ];
 
-      const list = overlay.querySelector('#ri-review-list');
-      const count = overlay.querySelector('#ri-rev-count');
-      if (list) list.innerHTML = renderReviewCards(filtered);
-      if (count) count.textContent = `(${filtered.length})`;
-    });
+  return `
+    <div class="ri-sentiment-trend">
+      ${bars.map(bar => `
+        <div class="ri-trend-bar-group">
+          <div class="ri-trend-label">${bar.label}</div>
+          <div class="ri-trend-container">
+            <div class="ri-trend-fill ri-trend-${bar.color}" style="width:${Math.max(5, bar.pct)}%" aria-hidden="true"></div>
+          </div>
+          <div class="ri-trend-stat">${bar.pct}% (${bar.count})</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderKeywordCloud(keywords) {
+  if (!keywords?.length) return '<div class="ri-empty">No keywords extracted.</div>';
+
+  const sorted = keywords.slice(0, 12);
+  const max = sorted.length;
+  const sizes = sorted.map((_, i) => {
+    const weight = Math.floor(((max - i) / max) * 100);
+    return Math.max(0.8, Math.min(1.4, weight / 100));
   });
 
-  overlay.querySelector('#ri-close')?.focus?.();
+  return `
+    <div class="ri-keyword-cloud">
+      ${sorted.map((kw, i) => `<span class="ri-keyword" style="font-size:${sizes[i]}rem">${escHtml(kw)}</span>`).join(' ')}
+    </div>
+  `;
+}
+
+function renderFeatureCard(type, feature, scores, allReviews, backendReviews) {
+  const positive = clampPercent(scores?.positive || 0);
+  const negative = clampPercent(scores?.negative || 0);
+  const total = Math.max(1, (scores?.total || 1));
+  const isPraised = type === 'praised';
+  
+  // Find reviews mentioning this feature
+  const mentionCount = (backendReviews || allReviews || []).filter(r => {
+    if (!Array.isArray(r.aspects)) return false;
+    return r.aspects.some(a => a.toLowerCase() === feature.toLowerCase());
+  }).length;
+
+  // Get a sample of positive/negative reviews for this aspect
+  const sample = (backendReviews || allReviews || [])
+    .filter(r => Array.isArray(r.aspects) && r.aspects.some(a => a.toLowerCase() === feature.toLowerCase()))
+    .slice(0, 2);
+
+  const sampleText = sample.length ? truncate(sample[0].body || sample[0].title || '', 120) : 'No sample available';
+
+  return `
+    <div class="ri-feature-card ri-feature-${isPraised ? 'praised' : 'complained'}">
+      <div class="ri-feature-header">
+        <div class="ri-feature-name">${escHtml(feature)}</div>
+        <div class="ri-feature-badge ${isPraised ? 'ri-badge-praised' : 'ri-badge-complained'}">
+          ${isPraised ? '👍' : '👎'}
+        </div>
+      </div>
+
+      <!-- Chart 1: Sentiment Bar -->
+      <div class="ri-feature-chart">
+        <div class="ri-micro-title">Sentiment Split</div>
+        <div class="ri-feature-bar">
+          <div class="ri-feature-bar-pos" style="width:${positive}%" title="Positive ${positive}%"></div>
+          <div class="ri-feature-bar-neg" style="width:${negative}%" title="Negative ${negative}%"></div>
+        </div>
+        <div class="ri-feature-pct">${isPraised ? positive : negative}% ${isPraised ? 'positive' : 'negative'}</div>
+      </div>
+
+      <!-- Chart 2: Mention Count & Stats -->
+      <div class="ri-feature-stats">
+        <div class="ri-stat-item">
+          <div class="ri-stat-label">Mentions</div>
+          <div class="ri-stat-value">${mentionCount}</div>
+        </div>
+        <div class="ri-stat-item">
+          <div class="ri-stat-label">Score</div>
+          <div class="ri-stat-value">${total} reviews</div>
+        </div>
+      </div>
+
+      <!-- Chart 3: Sample Review Snippet -->
+      ${sample.length ? `
+        <div class="ri-feature-sample">
+          <div class="ri-micro-title">Sample</div>
+          <div class="ri-sample-text" title="${escHtml(sample[0].body || sample[0].title || '')}">"${escHtml(sampleText)}…"</div>
+        </div>
+      ` : ''}
+    </div>
+  `;
 }
 
 function renderDonutChart(counts) {
@@ -394,7 +466,7 @@ function renderDonutChart(counts) {
   `;
 }
 
-function renderStarBars(stars) {
+function renderStarBars(stars, topStars) {
   const rows = [5, 4, 3, 2, 1].map(star => {
     const value = stars[star] || 0;
     const max = Math.max(...Object.values(stars), 1);
@@ -403,7 +475,7 @@ function renderStarBars(stars) {
       <div class="ri-star-row">
         <span class="ri-star-label">${star}★</span>
         <div class="ri-star-track"><span class="ri-star-fill" style="width:${width}%"></span></div>
-        <span class="ri-star-value">${value}</span>
+        <span class="ri-star-value">${value}${topStars === star ? ' • peak' : ''}</span>
       </div>
     `;
   }).join('');
@@ -418,6 +490,18 @@ function computeReviewStats(reviews) {
     if (rating >= 1 && rating <= 5) stars[rating] += 1;
   }
   return { stars };
+}
+
+function summarizeStars(stars) {
+  let bestStar = 5;
+  let bestValue = -1;
+  for (const [key, value] of Object.entries(stars || {})) {
+    if (value > bestValue) {
+      bestValue = value;
+      bestStar = Number(key);
+    }
+  }
+  return bestStar;
 }
 
 function renderAspectBars(aspects) {
