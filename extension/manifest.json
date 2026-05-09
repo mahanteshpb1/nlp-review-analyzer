@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "Review Intel — Amazon NLP Analyzer",
+  "version": "1.0.0",
+  "description": "AI-powered Amazon review analysis with aspect-level sentiment intelligence",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://www.amazon.in/*",
+    "https://www.amazon.com/*",
+    "https://www.amazon.co.uk/*",
+    "http://localhost:8000/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.amazon.in/dp/*",
+        "https://www.amazon.com/dp/*",
+        "https://www.amazon.co.uk/dp/*",
+        "https://www.amazon.in/*/dp/*",
+        "https://www.amazon.com/*/dp/*"
+      ],
+      "js": ["scraper.js", "content.js"],
+      "css": ["overlay.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "Review Intel"
+  }
+}

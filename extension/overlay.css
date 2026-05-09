@@ -1,0 +1,337 @@
+/* overlay.css — Review Intel panel injected into Amazon pages */
+
+#review-intel-btn {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 999998;
+  cursor: pointer;
+}
+
+#ri-fab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #1a1a2e;
+  color: #e8e8f0;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+  transition: transform 0.15s, box-shadow 0.15s;
+  user-select: none;
+}
+
+#ri-fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.45);
+}
+
+#review-intel-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 420px;
+  height: 100vh;
+  z-index: 999999;
+  overflow-y: auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  background: #0f0f1a;
+  color: #d8d8e8;
+  box-shadow: -4px 0 32px rgba(0,0,0,0.5);
+}
+
+#ri-panel {
+  padding: 0 0 40px;
+}
+
+#ri-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  background: #1a1a2e;
+  border-bottom: 1px solid #2a2a40;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+#ri-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #a8b4ff;
+  letter-spacing: 0.02em;
+}
+
+#ri-subtitle {
+  font-size: 11px;
+  color: #7878a0;
+  margin-top: 2px;
+}
+
+#ri-close {
+  background: none;
+  border: 1px solid #3a3a55;
+  color: #7878a0;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+#ri-close:hover {
+  background: #2a2a40;
+  color: #d8d8e8;
+}
+
+/* Status bar */
+.ri-status {
+  padding: 12px 18px;
+  font-size: 12px;
+  border-bottom: 1px solid #2a2a40;
+}
+.ri-status--scraping { color: #a8b4ff; }
+.ri-status--analyzing { color: #80d8b0; }
+.ri-status--error { color: #ff8080; background: #2a1a1a; }
+
+/* Metrics */
+.ri-metrics {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border-bottom: 1px solid #2a2a40;
+}
+
+.ri-metric {
+  padding: 12px 10px;
+  border-right: 1px solid #2a2a40;
+  text-align: center;
+}
+.ri-metric:last-child { border-right: none; }
+
+.ri-metric-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #5858a0;
+  margin-bottom: 4px;
+}
+
+.ri-metric-val {
+  font-size: 18px;
+  font-weight: 600;
+  color: #d8d8e8;
+}
+.ri-metric-val.ri-small { font-size: 12px; margin-top: 2px; }
+.ri-green { color: #4dbe9f !important; }
+.ri-red   { color: #e06060 !important; }
+
+/* Sections */
+.ri-section {
+  padding: 14px 18px;
+  border-bottom: 1px solid #1e1e32;
+}
+
+.ri-section-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #5858a0;
+  margin-bottom: 10px;
+}
+
+/* Summary */
+.ri-summary {
+  font-size: 13px;
+  line-height: 1.65;
+  color: #c0c0d8;
+}
+
+/* Sentiment bar */
+.ri-sent-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.ri-sent-pos { background: #4dbe9f; }
+.ri-sent-neu { background: #4a4a70; }
+.ri-sent-neg { background: #c85858; }
+
+.ri-sent-legend {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  color: #7878a0;
+}
+.ri-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+.ri-dot-green { background: #4dbe9f; }
+.ri-dot-gray  { background: #4a4a70; }
+.ri-dot-red   { background: #c85858; }
+
+/* Aspect bars */
+.ri-aspect-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.ri-aspect-name {
+  font-size: 12px;
+  color: #a0a0c0;
+  width: 90px;
+  flex-shrink: 0;
+  text-transform: capitalize;
+}
+.ri-bar-track {
+  flex: 1;
+  height: 7px;
+  border-radius: 4px;
+  background: #2a2a40;
+  position: relative;
+  overflow: hidden;
+}
+.ri-bar-pos {
+  position: absolute;
+  left: 0; top: 0;
+  height: 100%;
+  background: #4dbe9f;
+  border-radius: 4px;
+}
+.ri-bar-neg {
+  position: absolute;
+  right: 0; top: 0;
+  height: 100%;
+  background: #c85858;
+  border-radius: 4px;
+}
+.ri-bar-pct {
+  font-size: 11px;
+  color: #5858a0;
+  width: 30px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Complaints */
+.ri-complaints { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Tags */
+.ri-tag {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #2a2a40;
+  color: #7878a0;
+}
+.ri-tag-neg {
+  background: #2a1a1a;
+  color: #e08080;
+}
+
+/* Verdict */
+.ri-verdict {
+  margin: 0 18px 14px;
+  padding: 12px 14px;
+  background: #1a2a3a;
+  border: 1px solid #1e3a5a;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #80b8e0;
+  line-height: 1.6;
+}
+
+/* Filter chips */
+.ri-filter-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.ri-chip {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid #3a3a55;
+  background: none;
+  color: #7878a0;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.ri-chip:hover { background: #2a2a40; }
+.ri-chip-active {
+  background: #2a2a50;
+  border-color: #6060c0;
+  color: #a8a8ff;
+}
+
+/* Review cards */
+.ri-rcard {
+  border: 1px solid #2a2a40;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.ri-rcard-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.ri-rcard-meta {
+  font-size: 10px;
+  color: #5858a0;
+}
+
+.ri-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+.ri-badge-pos { background: #1a2e22; color: #4dbe9f; }
+.ri-badge-neg { background: #2a1a1a; color: #e08080; }
+.ri-badge-neu { background: #2a2a3a; color: #7878a0; }
+
+.ri-rcard-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: #c0c0d8;
+  margin-bottom: 4px;
+}
+
+.ri-rcard-body {
+  font-size: 12px;
+  color: #7878a0;
+  line-height: 1.55;
+}
+
+.ri-tags {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ri-empty {
+  font-size: 12px;
+  color: #5858a0;
+  padding: 8px 0;
+}
