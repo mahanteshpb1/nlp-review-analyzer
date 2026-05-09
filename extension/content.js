@@ -183,7 +183,7 @@ async function runPipeline(product, overlay) {
     return;
   }
 
-  if (!setStatusSafe('analyzing', `Analyzing ${uniqueReviews.length} holistic reviews with NLP…`)) return;
+  if (!setStatusSafe('analyzing', `Analyzing holistic reviews with NLP…`)) return;
 
   let analytics;
   try {
