@@ -1,0 +1,10 @@
+services:
+  - type: web_service
+    name: reviewintel-backend
+    env: python
+    branch: main
+    plan: starter
+    region: oregon
+    buildCommand: pip install -r backend/requirements.txt && python -m spacy download en_core_web_sm
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
