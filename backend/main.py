@@ -45,6 +45,7 @@ class Review(BaseModel):
 class AnalyzeRequest(BaseModel):
     product: ProductInfo
     reviews: List[Review]
+    aspects: Optional[List[str]] = []
 
 
 class AnalyzeResponse(BaseModel):
@@ -77,7 +78,7 @@ def analyze(req: AnalyzeRequest):
         raise HTTPException(status_code=400, detail="Max 300 reviews per request")
 
     try:
-        result = pipeline.run(req.product.dict(), [r.dict() for r in req.reviews])
+        result = pipeline.run(req.product.dict(), [r.dict() for r in req.reviews], req.aspects or [])
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

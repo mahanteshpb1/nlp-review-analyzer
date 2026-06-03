@@ -6,13 +6,20 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 // Relay messages between content script and popup if needed
+const BACKEND_URL = 'http://localhost:8000';
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  console.log('[ReviewIntel] message received', msg?.type);
+
   if (msg.type === 'ANALYSIS_COMPLETE') {
-    // Could update badge, store results, etc.
-    chrome.action.setBadgeText({ text: '✓', tabId: sender.tab.id });
+    chrome.action.setBadgeText({ text: '✓', tabId: sender.tab?.id });
     chrome.action.setBadgeBackgroundColor({ color: '#4dbe9f' });
-  } else if (msg.type === 'ANALYZE_REVIEWS') {
-    fetch('http://localhost:8000/analyze', {
+    return;
+  }
+
+  if (msg.type === 'ANALYZE_REVIEWS') {
+    console.log('[ReviewIntel] ANALYZE_REVIEWS payload', msg.payload?.reviews?.length, 'reviews');
+    fetch(`${BACKEND_URL}/analyze`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(msg.payload)
@@ -24,10 +31,18 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         }
         return response.json();
       })
-      .then(data => sendResponse({ success: true, data }))
-      .catch(error => sendResponse({ success: false, error: error.message }));
-      
+      .then(data => {
+        console.log('[ReviewIntel] backend response OK');
+        sendResponse({ success: true, data });
+      })
+      .catch(error => {
+        console.error('[ReviewIntel] backend fetch failed', error);
+        const message = error.message || 'Failed to fetch';
+        sendResponse({ success: false, error: message });
+      });
+
     return true; // Keep message channel open for async response
   }
-  return true;
+
+  return false;
 });

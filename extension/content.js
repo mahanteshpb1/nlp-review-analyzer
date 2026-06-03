@@ -197,7 +197,7 @@ async function runPipeline(product, overlay) {
   try {
     const response = await chrome.runtime.sendMessage({
       type: 'ANALYZE_REVIEWS',
-      payload: { product, reviews: uniqueReviews }
+      payload: { product, reviews: uniqueReviews, aspects: scraped.aspects || [] }
     });
 
     if (!response || !response.success) {
@@ -206,7 +206,10 @@ async function runPipeline(product, overlay) {
 
     analytics = response.data;
   } catch (error) {
-    setStatusSafe('error', `Backend error: ${error.message}. Is FastAPI running on :8000?`);
+    const runtimeError = chrome.runtime?.lastError?.message;
+    const message = runtimeError ? `${error.message} (${runtimeError})` : error.message;
+    console.error('[ReviewIntel] analyze error', message, error);
+    setStatusSafe('error', `Backend error: ${message}. Is FastAPI running on :8000?`);
     return;
   }
 
